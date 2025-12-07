@@ -1,0 +1,45 @@
+{% extends 'webapp/base.html' %}
+{% block content %}
+<div class="max-w-md mx-auto text-center bg-white p-10 rounded-xl shadow-lg mt-10">
+    <h1 class="text-2xl font-bold mb-4">⏱️ Focus Timer</h1>
+    
+    <input type="text" id="subject" placeholder="What are you studying?" class="w-full border p-2 mb-6 text-center rounded">
+    
+    <div class="text-6xl font-mono font-bold text-blue-900 mb-8" id="display">00:00</div>
+    
+    <div class="flex justify-center gap-4 mb-6">
+        <button onclick="startTimer()" class="bg-green-500 text-white px-6 py-2 rounded font-bold">Start</button>
+        <button onclick="stopTimer()" class="bg-red-500 text-white px-6 py-2 rounded font-bold">Stop</button>
+    </div>
+
+    <form method="POST" action="{% url 'save_session' %}" id="saveForm" class="hidden">
+        {% csrf_token %}
+        <input type="hidden" name="minutes" id="minutesInput">
+        <input type="hidden" name="subject" id="subjectInput">
+    </form>
+</div>
+
+<script>
+    let startTime, interval;
+    
+    function startTimer() {
+        startTime = Date.now();
+        interval = setInterval(() => {
+            let elapsed = Math.floor((Date.now() - startTime) / 1000);
+            let mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            let secs = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('display').innerText = `${mins}:${secs}`;
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(interval);
+        let elapsedMins = (Date.now() - startTime) / 1000 / 60;
+        if(confirm(`Save ${elapsedMins.toFixed(1)} minutes of study?`)) {
+            document.getElementById('minutesInput').value = elapsedMins;
+            document.getElementById('subjectInput').value = document.getElementById('subject').value || "General";
+            document.getElementById('saveForm').submit();
+        }
+    }
+</script>
+{% endblock %}

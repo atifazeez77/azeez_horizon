@@ -10,7 +10,7 @@
         <div>
             {% if user.is_authenticated %}
                 <a href="{% url 'dashboard' %}" class="mr-4">Dashboard</a>
-                <a href="{% url 'mentor' %}" class="mr-4">AI Mentor</a>
+                <a href="{% url 'ai_chat' %}" class="mr-4">AI Mentor</a>
                 <form action="{% url 'logout' %}" method="post" class="inline">
                     {% csrf_token %} <button>Logout</button>
                 </form>

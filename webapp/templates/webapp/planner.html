@@ -1,0 +1,38 @@
+{% extends 'webapp/base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">📅 Today's Study Plan</h1>
+    
+    <div class="bg-white p-6 rounded shadow mb-8">
+        <form method="POST" class="flex gap-4">
+            {% csrf_token %}
+            <input type="hidden" name="add_task" value="true">
+            <input type="text" name="subject" placeholder="Subject (e.g. Math)" class="border p-2 rounded w-1/4" required>
+            <input type="text" name="topic" placeholder="Topic to cover" class="border p-2 rounded w-2/4" required>
+            <input type="number" name="minutes" placeholder="Mins" class="border p-2 rounded w-1/6" required>
+            <button class="bg-blue-600 text-white px-4 rounded font-bold">+</button>
+        </form>
+    </div>
+
+    <div class="space-y-4">
+        {% for task in tasks %}
+        <div class="bg-white p-4 rounded shadow flex justify-between items-center {% if task.is_completed %}opacity-50{% endif %}">
+            <div>
+                <h3 class="font-bold text-lg {{ task.is_completed|yesno:'line-through text-gray-500,' }}">{{ task.subject }}</h3>
+                <p class="text-gray-600">{{ task.topic }} ({{ task.estimated_minutes }} mins)</p>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="toggle_task" value="true">
+                <input type="hidden" name="task_id" value="{{ task.id }}">
+                <button class="px-4 py-2 rounded {% if task.is_completed %}bg-green-100 text-green-800{% else %}bg-gray-200{% endif %}">
+                    {{ task.is_completed|yesno:"Done ✅,Mark Done" }}
+                </button>
+            </form>
+        </div>
+        {% empty %}
+        <p class="text-center text-gray-500">No tasks planned for today.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

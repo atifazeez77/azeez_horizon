@@ -1,0 +1,27 @@
+{% extends 'webapp/base.html' %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md mt-6">
+    <div class="mb-6 border-b pb-4">
+        <h2 class="text-2xl font-bold text-blue-900">🤖 Ask Azeez Sir (AI)</h2>
+        <p class="text-gray-500 text-sm">Strict advice, motivation, and study plans in Hinglish.</p>
+    </div>
+
+    {% if response %}
+    <div class="mb-6 bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+        <h3 class="font-bold text-blue-900 mb-1">Azeez Sir says:</h3>
+        <p class="text-gray-800 leading-relaxed">{{ response|linebreaks }}</p>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+        <div>
+            <label class="block text-gray-700 font-medium mb-2">Your Question / Doubt:</label>
+            <textarea name="query" rows="4" class="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., I am feeling lazy to study Physics..."></textarea>
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition duration-200">
+            Ask Now
+        </button>
+    </form>
+</div>
+{% endblock %}

@@ -1,19 +1,3 @@
-"""
-URL configuration for core project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
 from webapp import views
@@ -21,9 +5,21 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.home, name='home'),
-    path('dashboard/', views.dashboard, name='dashboard'),
-    path('mentor/', views.ai_mentor, name='mentor'),
+    path('', views.dashboard, name='dashboard'),
+    
+    # Tools
+    path('predictor/', views.predictor, name='predictor'),
+    path('planner/', views.planner, name='planner'),
+    path('timer/', views.study_timer, name='study_timer'),
+    path('save-session/', views.save_session, name='save_session'),
+    path('ai-chat/', views.ai_chat, name='ai_chat'),
+    
+    # Library
+    path('library-action/', views.library_action, name='library_action'),
+    
+    # Auth & Parent
+    path('signup/', views.signup, name='signup'),
+    path('link-child/', views.link_child, name='link_child'),
     path('login/', auth_views.LoginView.as_view(template_name='webapp/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 ]

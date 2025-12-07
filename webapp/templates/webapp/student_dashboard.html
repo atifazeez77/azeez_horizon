@@ -48,13 +48,13 @@
         <span class="text-2xl">🤖</span>
         <p class="font-bold text-indigo-900">Ask Azeez AI</p>
     </a>
-    <div class="bg-indigo-50 p-4 rounded-lg text-center hover:bg-indigo-100 transition cursor-pointer">
+    <a href="{% url 'study_timer' %}" class="bg-indigo-50 p-4 rounded-lg text-center hover:bg-indigo-100 transition cursor-pointer">
         <span class="text-2xl">⏱️</span>
         <p class="font-bold text-indigo-900">Start Timer</p>
-    </div>
-    <div class="bg-indigo-50 p-4 rounded-lg text-center hover:bg-indigo-100 transition cursor-pointer">
+    </a>
+    <a href="{% url 'planner' %}" class="bg-indigo-50 p-4 rounded-lg text-center hover:bg-indigo-100 transition cursor-pointer">
         <span class="text-2xl">📝</span>
         <p class="font-bold text-indigo-900">My Planner</p>
-    </div>
+    </a>
 </div>
 {% endblock %}
