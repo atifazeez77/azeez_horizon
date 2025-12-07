@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from .models import StudentProfile
 
 # --- SETUP YOUR API KEY HERE ---
-GENAI_API_KEY = "AIzaSyCyCVNBEL43u7oGF_-uvlz5zIH7q14lrqQ" 
+GENAI_API_KEY = "AI......" 
 genai.configure(api_key=GENAI_API_KEY)
 
 def home(request):
