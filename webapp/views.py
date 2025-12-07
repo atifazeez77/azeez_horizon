@@ -110,81 +110,8 @@ def ai_chat(request):
         Reply in Hinglish. Be direct and motivating.
         """
         try:
-            ai_res = model.generate_content(prompt)
-            response_text = ai_res.text
-            # Log it
-            AIChatLog.objects.create(student=request.user.student_profile, query=query, response=response_text)
-        except Exception as e:
-            # THIS IS THE CHANGE: Print the real error to your VS Code Terminal
-            print("❌ AI ERROR:", e) 
-            response_text = f"Error: {e}" # Show error on screen too
-
-    return render(request, 'webapp/ai_chat.html', {'response': response_text})
-# --- ADD TO VIEWS.PY ---
-
-@login_required
-def planner(request):
-    profile = request.user.student_profile
-    
-    # Handle New Task
-    if request.method == 'POST' and 'add_task' in request.POST:
-        StudyTask.objects.create(
-            student=profile,
-            subject=request.POST.get('subject'),
-            topic=request.POST.get('topic'),
-            estimated_minutes=int(request.POST.get('minutes'))
-        )
-        return redirect('planner')
-
-    # Handle Task Completion
-    if request.method == 'POST' and 'toggle_task' in request.POST:
-        task = StudyTask.objects.get(id=request.POST.get('task_id'))
-        task.is_completed = not task.is_completed
-        task.save()
-        return redirect('planner')
-
-    tasks = StudyTask.objects.filter(student=profile, date=timezone.now().date())
-    return render(request, 'webapp/planner.html', {'tasks': tasks})
-
-@login_required
-def study_timer(request):
-    return render(request, 'webapp/timer.html')
-
-@login_required
-def save_session(request):
-    if request.method == 'POST':
-        # AJAX call from timer page
-        minutes = float(request.POST.get('minutes'))
-        subject = request.POST.get('subject')
-        StudySession.objects.create(
-            student=request.user.student_profile,
-            subject=subject,
-            duration_minutes=minutes
-        )
-    return redirect('dashboard')
-@login_required
-def link_child(request):
-    if request.method == 'POST':
-        code = request.POST.get('link_code')
-        try:
-            child_user = User.objects.get(link_code=code, role='STUDENT')
-            child_profile = child_user.student_profile
-            child_profile.parent = request.user
-            child_profile.save()
-        except User.DoesNotExist:
-            pass # Handle error in production
-    return redirect('dashboard')
-from .forms import StudentSignupForm
-
-def signup(request):
-    if request.method == 'POST':
-        form = StudentSignupForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            # Log them in immediately
-            from django.contrib.auth import login
-            login(request, user)
-            return redirect('dashboard')
-    else:
-        form = StudentSignupForm()
-    return render(request, 'webapp/signup.html', {'form': form})
+            ai_response = model.generate_content(prompt)
+            response_text = ai_response.text
+        except:
+            response_text = "Check internet connection."
+    return render(request, 'webapp/ai_mentor.html', {'response': response_text})
