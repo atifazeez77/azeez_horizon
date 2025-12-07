@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Azeez Horizon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-blue-900 text-white p-4 flex justify-between">
+        <h1 class="font-bold text-xl">Azeez Horizon</h1>
+        <div>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="mr-4">Dashboard</a>
+                <a href="{% url 'mentor' %}" class="mr-4">AI Mentor</a>
+                <form action="{% url 'logout' %}" method="post" class="inline">
+                    {% csrf_token %} <button>Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="p-8">{% block content %}{% endblock %}</div>
+</body>
+</html>
