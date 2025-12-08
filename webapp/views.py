@@ -119,7 +119,7 @@ def ai_chat(request):
     response_text = ""
     if request.method == 'POST':
         query = request.POST.get('query')
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('models/gemini-2.5-flash')
         prompt = f"You are Azeez Sir. Student Class {request.user.student_profile.current_class}. Query: {query}. Reply in Hinglish."
         try:
             ai_response = model.generate_content(prompt)
