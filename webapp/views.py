@@ -3,12 +3,30 @@ import google.generativeai as genai
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import *
+from django.contrib.auth import login
 from dotenv import load_dotenv
 
+# Import your Models and Forms
+from .models import *
+from .forms import StudentSignupForm 
+
+# --- CONFIGURATION ---
 load_dotenv()
 GENAI_API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GENAI_API_KEY)
+if GENAI_API_KEY:
+    genai.configure(api_key=GENAI_API_KEY)
+
+# --- AUTHENTICATION ---
+def signup(request):
+    if request.method == 'POST':
+        form = StudentSignupForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user) # Log them in immediately after signup
+            return redirect('dashboard')
+    else:
+        form = StudentSignupForm()
+    return render(request, 'webapp/signup.html', {'form': form})
 
 # --- DASHBOARD (Requirement 2 & 8) ---
 @login_required
@@ -24,7 +42,9 @@ def dashboard(request):
     # 2. Student View Logic
     if user.role == 'STUDENT':
         profile, created = StudentProfile.objects.get_or_create(user=user)
+        # Handle case where AppConfig might not exist yet
         config = AppConfig.objects.first()
+        motivation = config.daily_motivation if config else "Keep Pushing!"
         
         # Get Stats
         today_study = StudySession.objects.filter(student=profile, start_time__date=timezone.now().date())
@@ -35,7 +55,7 @@ def dashboard(request):
         
         context = {
             'profile': profile,
-            'motivation': config.daily_motivation if config else "Keep Pushing!",
+            'motivation': motivation,
             'study_hours': round(total_mins / 60, 1),
             'active_lib_session': active_library_session,
         }
@@ -43,10 +63,33 @@ def dashboard(request):
     
     return redirect('/admin/') # Teachers/Admins go to panel for now
 
+# --- PARENT FEATURE: LINK CHILD ---
+@login_required
+def link_child(request):
+    if request.method == 'POST':
+        code = request.POST.get('link_code')
+        try:
+            # Find student with this code
+            child_user = User.objects.get(link_code=code, role='STUDENT')
+            child_profile = child_user.student_profile
+            
+            # Link to current parent
+            child_profile.parent = request.user
+            child_profile.save()
+        except User.DoesNotExist:
+            # In production, you might want to show an error message here
+            pass 
+    return redirect('dashboard')
+
 # --- LIBRARY MODULE (Requirement 6) ---
 @login_required
 def library_action(request):
-    profile = request.user.student_profile
+    # Safely get profile
+    try:
+        profile = request.user.student_profile
+    except:
+        return redirect('dashboard')
+
     if not profile.is_library_member:
         return redirect('dashboard') # Security check
 
@@ -73,24 +116,27 @@ def predictor(request):
     msg = ""
 
     if request.method == 'POST':
-        # Simplified Logic (Replace with your ML Model later)
-        last_marks = float(request.POST.get('last_marks')) # Out of 100
-        study_hrs = float(request.POST.get('study_hrs'))
-        
-        # Formula: 60% weight to marks + 10% per hour of study (capped)
-        pred_val = (last_marks * 0.6) + (study_hrs * 2.5) + 20 
-        prediction = min(round(pred_val, 1), 99.9)
-        
-        # Status Logic
-        if prediction >= profile.target_score_percent:
-            msg = "Target is Safe ✅"
-        elif prediction >= profile.target_score_percent - 10:
-            msg = "Slightly Behind ⚠️"
-        else:
-            msg = "At Serious Risk 🚨"
+        try:
+            # Simplified Logic (Replace with your ML Model later)
+            last_marks = float(request.POST.get('last_marks', 0)) # Out of 100
+            study_hrs = float(request.POST.get('study_hrs', 0))
             
-        # Save History
-        PredictionHistory.objects.create(student=profile, predicted_score=prediction, status_message=msg)
+            # Formula: 60% weight to marks + 10% per hour of study (capped)
+            pred_val = (last_marks * 0.6) + (study_hrs * 2.5) + 20 
+            prediction = min(round(pred_val, 1), 99.9)
+            
+            # Status Logic
+            if prediction >= profile.target_score_percent:
+                msg = "Target is Safe ✅"
+            elif prediction >= profile.target_score_percent - 10:
+                msg = "Slightly Behind ⚠️"
+            else:
+                msg = "At Serious Risk 🚨"
+                
+            # Save History
+            PredictionHistory.objects.create(student=profile, predicted_score=prediction, status_message=msg)
+        except ValueError:
+            msg = "Please enter valid numbers."
 
     return render(request, 'webapp/predictor.html', {'prediction': prediction, 'msg': msg})
 
@@ -101,8 +147,10 @@ def ai_chat(request):
     if request.method == 'POST':
         query = request.POST.get('query')
         
-        # Azeez Persona Prompt
-        model = genai.GenerativeModel('models/gemini-2.5-flash')
+        # Using 1.5-flash as it is the most stable standard model currently.
+        # If you see 2.5 in your list, you can change this string to 'gemini-2.5-flash'
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
         prompt = f"""
         You are Azeez Sir. 
         Student Profile: Class {request.user.student_profile.current_class}, Target: {request.user.student_profile.target_exam}.
@@ -112,11 +160,17 @@ def ai_chat(request):
         try:
             ai_response = model.generate_content(prompt)
             response_text = ai_response.text
-        except:
-            response_text = "Check internet connection."
-    return render(request, 'webapp/ai_mentor.html', {'response': response_text})
-# --- PASTE THIS AT THE BOTTOM OF views.py ---
+            
+            # Log the chat
+            AIChatLog.objects.create(student=request.user.student_profile, query=query, response=response_text)
+        except Exception as e:
+            print(f"AI Error: {e}") # Print error to console for debugging
+            response_text = "Server busy or API Key invalid. Try again."
+            
+    # FIXED: Renders 'ai_chat.html', not 'ai_mentor.html'
+    return render(request, 'webapp/ai_chat.html', {'response': response_text})
 
+# --- STUDY PLANNER ---
 @login_required
 def planner(request):
     profile = request.user.student_profile
@@ -133,7 +187,8 @@ def planner(request):
 
     # Handle Task Completion
     if request.method == 'POST' and 'toggle_task' in request.POST:
-        task = StudyTask.objects.get(id=request.POST.get('task_id'))
+        task_id = request.POST.get('task_id')
+        task = get_object_or_404(StudyTask, id=task_id)
         task.is_completed = not task.is_completed
         task.save()
         return redirect('planner')
@@ -141,6 +196,7 @@ def planner(request):
     tasks = StudyTask.objects.filter(student=profile, date=timezone.now().date())
     return render(request, 'webapp/planner.html', {'tasks': tasks})
 
+# --- TIMER ---
 @login_required
 def study_timer(request):
     return render(request, 'webapp/timer.html')
