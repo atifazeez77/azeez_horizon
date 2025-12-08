@@ -5,7 +5,12 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.dashboard, name='dashboard'),
+    
+    # 1. Root URL now points to Landing Page
+    path('', views.landing_page, name='landing'), 
+    
+    # 2. Dashboard gets its own URL
+    path('dashboard/', views.dashboard, name='dashboard'),
     
     # Tools
     path('predictor/', views.predictor, name='predictor'),

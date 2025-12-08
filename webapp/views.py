@@ -16,6 +16,13 @@ GENAI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GENAI_API_KEY:
     genai.configure(api_key=GENAI_API_KEY)
 
+# --- LANDING PAGE ---
+def landing_page(request):
+    # If user is already logged in, skip directly to dashboard
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    return render(request, 'webapp/landing.html')
+
 # --- AUTHENTICATION (The Missing Part) ---
 def signup(request):
     if request.method == 'POST':
