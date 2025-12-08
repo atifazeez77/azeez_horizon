@@ -115,3 +115,44 @@ def ai_chat(request):
         except:
             response_text = "Check internet connection."
     return render(request, 'webapp/ai_mentor.html', {'response': response_text})
+# --- PASTE THIS AT THE BOTTOM OF views.py ---
+
+@login_required
+def planner(request):
+    profile = request.user.student_profile
+    
+    # Handle New Task
+    if request.method == 'POST' and 'add_task' in request.POST:
+        StudyTask.objects.create(
+            student=profile,
+            subject=request.POST.get('subject'),
+            topic=request.POST.get('topic'),
+            estimated_minutes=int(request.POST.get('minutes'))
+        )
+        return redirect('planner')
+
+    # Handle Task Completion
+    if request.method == 'POST' and 'toggle_task' in request.POST:
+        task = StudyTask.objects.get(id=request.POST.get('task_id'))
+        task.is_completed = not task.is_completed
+        task.save()
+        return redirect('planner')
+
+    tasks = StudyTask.objects.filter(student=profile, date=timezone.now().date())
+    return render(request, 'webapp/planner.html', {'tasks': tasks})
+
+@login_required
+def study_timer(request):
+    return render(request, 'webapp/timer.html')
+
+@login_required
+def save_session(request):
+    if request.method == 'POST':
+        minutes = float(request.POST.get('minutes'))
+        subject = request.POST.get('subject')
+        StudySession.objects.create(
+            student=request.user.student_profile,
+            subject=subject,
+            duration_minutes=minutes
+        )
+    return redirect('dashboard')
